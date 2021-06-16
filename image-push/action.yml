@@ -1,0 +1,35 @@
+name: 'Docker Image Push'
+description: 'Docker image push action'
+
+runs:
+  using: "composite"
+  steps:
+    -
+      name: Check Docker
+      shell: bash
+      run: |
+        docker version
+        docker info
+    -
+      # Switch docker context to a remote arm64 host
+      name: Switch to arm64 builder host
+      if: ${{ env.ARCH == 'arm64' }}
+      uses: arwynfr/actions-docker-context@98fc92878d0b856c1112c79b8d0f45353206e186
+      with:
+        docker_host: "ssh://ubuntu@${{ secrets.ARM64_HOST }}"
+        context_name: arm64-host
+        ssh_key: "${{ secrets.ARM64_HOST_SSH_KEY }}"
+        ssh_cert: "${{ secrets.ARM64_HOST_SSH_CERT }}"
+        use_context: true
+    -
+      name: Check Docker
+      shell: bash
+      run: |
+        docker version
+        docker info
+    -
+      name: Login to Docker Hub
+      uses: docker/login-action@v1
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
